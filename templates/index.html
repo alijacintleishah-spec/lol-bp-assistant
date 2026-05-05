@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LoL BP Assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ═════════════════════════════════════════════════════════════════
+   LoL Client Draft Screen — 1:2:1 Layout
+   ═════════════════════════════════════════════════════════════════ */
+:root {
+  --bg-void:    #010A14;
+  --bg-abyss:   #021024;
+  --bg-deep:    #051535;
+  --bg-surface: #081B38;
+  --bg-card:    #0A1F40;
+
+  --gold:        #C89B3C;
+  --gold-bright: #F0E6D2;
+  --gold-light:  #E2D4A8;
+  --gold-dim:    #A6852C;
+
+  --magic:       #0AC8FF;
+  --magic-glow:  #0397AB;
+  --magic-deep:  #0A3D55;
+
+  --blue-team:   #4A9FCC;
+  --blue-glow:   #3D8BB5;
+  --red-team:    #E84057;
+  --red-glow:    #C83045;
+
+  --green:       #2EBD6F;
+  --green-bright:#4AE87A;
+  --purple:      #A78BFA;
+  --purple-glow: #C084FC;
+
+  --text:        #CDD9E8;
+  --text-bright: #F0F4FA;
+  --text-dim:    #6B7D95;
+  --text-muted:  #3D5066;
+
+  --role-top:     #8B7355;
+  --role-jungle:  #2EBD6F;
+  --role-mid:     #8B5CF6;
+  --role-bot:     #C89B3C;
+  --role-support: #4DA0CC;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', 'Microsoft YaHei', sans-serif;
+  background: var(--bg-void);
+  color: var(--text);
+  height: 100vh;
+  font-size: 13px;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    url(/static/2379016.webp) center/cover no-repeat,
+    radial-gradient(ellipse at 18% 50%, rgba(74,159,204,0.05) 0%, transparent 50%),
+    radial-gradient(ellipse at 82% 50%, rgba(232,64,87,0.05) 0%, transparent 50%);
+  opacity: 0.35;
+  pointer-events: none; z-index: 0;
+}
+
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    linear-gradient(180deg, rgba(1,10,20,0.75) 0%, rgba(1,10,20,0.55) 50%, rgba(1,10,20,0.75) 100%);
+  pointer-events: none; z-index: 0;
+}
+
+/* ═══════════════════════ TOP BAR ═══════════════════════ */
+.topbar {
+  position: relative; z-index: 10;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; padding: 8px 24px; flex-shrink: 0;
+  background: linear-gradient(180deg, rgba(5,21,53,0.98), rgba(2,16,36,0.96));
+  border-bottom: 1px solid rgba(200,155,60,0.2);
+}
+.topbar::after {
+  content: ''; position: absolute; bottom: -1px; left: 8%; right: 8%; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(200,155,60,0.5), transparent);
+}
+
+.logo {
+  display: flex; align-items: center; gap: 10px;
+  font-family: 'Cinzel', serif; font-size: 15px; font-weight: 700;
+  letter-spacing: 1.5px; color: var(--gold-bright); white-space: nowrap;
+}
+.logo-icon {
+  width: 28px; height: 28px; flex-shrink: 0;
+  background: linear-gradient(135deg, #6B4F1A, var(--gold), var(--gold-bright));
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  box-shadow: 0 0 14px rgba(200,155,60,0.4);
+}
+.logo .ver {
+  font-family: 'Inter', sans-serif; font-size: 9px; color: var(--text-dim);
+  font-weight: 400; letter-spacing: 0; margin-left: 2px;
+  padding: 1px 6px; background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.status-group { display: flex; align-items: center; gap: 10px; }
+
+.timer-box {
+  display: none; align-items: center; gap: 8px;
+  font-size: 18px; font-weight: 700; font-family: 'Cinzel', serif;
+  color: var(--gold-bright); padding: 4px 14px;
+  background: rgba(200,155,60,0.08); border: 1px solid rgba(200,155,60,0.25);
+}
+.timer-box.urgent { color: #FF5C73; background: rgba(232,64,87,0.12); border-color: rgba(232,64,87,0.4); animation: urgentPulse 0.8s infinite; }
+@keyframes urgentPulse { 0%,100%{box-shadow:0 0 8px rgba(232,64,87,0.3);} 50%{box-shadow:0 0 20px rgba(232,64,87,0.7);} }
+.timer-phase { font-size: 8px; color: var(--text-dim); font-family: 'Inter', sans-serif; font-weight: 400; text-transform: uppercase; letter-spacing: 2px; }
+
+.status-dot {
+  display: flex; align-items: center; gap: 7px; font-size: 11px; color: var(--text-dim);
+  padding: 5px 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+}
+.dot {
+  width: 7px; height: 7px; clip-path: polygon(50% 0%,100% 50%,50% 100%,0% 50%);
+  background: var(--text-muted); transition: all 0.4s;
+}
+.dot.connected { background: var(--green); box-shadow: 0 0 10px rgba(46,189,111,0.6); }
+.dot.in-select { background: var(--magic); box-shadow: 0 0 10px rgba(10,200,255,0.6); animation: dotPulse 1.5s infinite; }
+@keyframes dotPulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+
+.meta-ver { font-size: 9px; color: var(--text-dim); }
+
+.btn {
+  padding: 5px 14px; font-size: 10px; font-family: 'Inter', sans-serif; font-weight: 500;
+  letter-spacing: 0.5px; border: 1px solid rgba(200,155,60,0.25);
+  background: rgba(200,155,60,0.06); color: var(--gold-dim); cursor: pointer;
+  transition: all 0.2s; white-space: nowrap;
+}
+.btn:hover { background: rgba(200,155,60,0.14); border-color: rgba(200,155,60,0.5); color: var(--gold); }
+.btn.active { background: rgba(200,155,60,0.15); border-color: rgba(200,155,60,0.5); color: var(--gold-bright); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.my-pos-tag {
+  font-size: 9px; padding: 3px 10px;
+  background: rgba(200,155,60,0.1); border: 1px solid rgba(200,155,60,0.25);
+  color: var(--gold-light); font-weight: 600; letter-spacing: 1px;
+}
+
+/* ═══════════════════════ MAIN DRAFT ═══════════════════════ */
+.draft-screen {
+  position: relative; z-index: 1;
+  flex: 1; display: flex; flex-direction: column; min-height: 0;
+}
+
+/* ── BAN ROW ── */
+.ban-row-outer {
+  display: flex; align-items: center; justify-content: center;
+  gap: 20px; padding: 10px 24px 8px; flex-shrink: 0;
+}
+.ban-group { display: flex; gap: 4px; }
+.ban-slot {
+  width: 52px; height: 52px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+.ban-slot img {
+  width: 100%; height: 100%; object-fit: cover;
+  opacity: 0.55; filter: grayscale(0.3) brightness(0.65);
+}
+.ban-slot.filled { border-color: rgba(232,64,87,0.3); }
+.ban-slot.empty .ban-placeholder {
+  font-size: 20px; color: var(--text-muted); opacity: 0.25;
+}
+.ban-separator {
+  font-family: 'Cinzel', serif; font-size: 11px; color: var(--text-dim);
+  letter-spacing: 2px; opacity: 0.5; user-select: none; margin: 0 8px;
+}
+
+/* ── TEAMS AREA: 1 : 2 : 1 ── */
+.teams-area {
+  flex: 1; display: flex; align-items: stretch;
+  padding: 6px 12px 12px; min-height: 0; gap: 12px;
+}
+
+/* ── Team Panel (25% each) ── */
+.team-panel {
+  flex: 1; display: flex; flex-direction: column;
+  gap: 6px; justify-content: center;
+  min-width: 180px;
+}
+
+.team-panel .team-header-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 4px 8px 8px; justify-content: center;
+}
+.team-header-row .team-ind {
+  width: 12px; height: 12px; clip-path: polygon(50% 0%,100% 50%,50% 100%,0% 50%);
+}
+.team-panel.blue .team-ind { background: var(--blue-team); box-shadow: 0 0 6px rgba(74,159,204,0.5); }
+.team-panel.red  .team-ind { background: var(--red-team); box-shadow: 0 0 6px rgba(232,64,87,0.5); }
+.team-header-row .team-name {
+  font-family: 'Cinzel', serif; font-size: 16px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase;
+}
+.team-panel.blue .team-name { color: var(--blue-team); }
+.team-panel.red  .team-name { color: #FF6B80; }
+
+/* Pick Slot in team panel */
+.team-panel .pick-slot {
+  flex: 1; display: flex; align-items: center; gap: 10px;
+  padding: 5px 10px; min-height: 0;
+  background: rgba(255,255,255,0.015);
+  border: 1px solid rgba(255,255,255,0.05);
+  position: relative;
+}
+.team-panel.blue .pick-slot { border-left: 3px solid rgba(74,159,204,0.2); }
+.team-panel.red  .pick-slot { border-right: 3px solid rgba(232,64,87,0.2); }
+
+.pick-slot .hex-img-wrap {
+  width: 66px; height: 66px; flex-shrink: 0; position: relative;
+}
+.pick-slot .hex-img {
+  width: 66px; height: 66px;
+  clip-path: polygon(25% 5%, 75% 5%, 95% 50%, 75% 95%, 25% 95%, 5% 50%);
+  object-fit: cover;
+}
+.pick-slot .hex-role-bar {
+  position: absolute; bottom: -1px; left: 50%; transform: translateX(-50%);
+  width: 28px; height: 3px; z-index: 2;
+}
+.role-bar-top     { background: var(--role-top); }
+.role-bar-jungle  { background: var(--role-jungle); }
+.role-bar-mid     { background: var(--role-mid); }
+.role-bar-bot     { background: var(--role-bot); }
+.role-bar-support { background: var(--role-support); }
+
+.pick-slot .pick-info {
+  display: flex; flex-direction: column; gap: 2px; min-width: 0;
+}
+.pick-slot .pick-pos-label {
+  font-size: 14px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+.team-panel.blue .pick-pos-label { color: #F0E6A0; }
+.team-panel.red  .pick-pos-label { color: #F0E6A0; }
+
+.pick-slot .pick-champ-name {
+  font-family: 'Cinzel', serif; font-size: 19px; font-weight: 700;
+  letter-spacing: 0.5px; color: #FFFFFF;
+}
+
+/* Empty pick slot */
+.pick-slot.empty .hex-img { display: none; }
+.pick-slot.empty .hex-img-wrap {
+  width: 66px; height: 66px;
+  background: rgba(255,255,255,0.02);
+  clip-path: polygon(25% 5%, 75% 5%, 95% 50%, 75% 95%, 25% 95%, 5% 50%);
+  display: flex; align-items: center; justify-content: center;
+}
+.pick-slot.empty .hex-img-wrap::after {
+  content: '?'; font-family: 'Cinzel', serif;
+  font-size: 22px; color: var(--text-muted); opacity: 0.3;
+}
+.pick-slot.empty .pick-pos-label { color: #8A8040; font-size: 14px; }
+.pick-slot.empty .pick-champ-name { color: #555555; font-size: 16px; font-weight: 400; }
+
+/* Team footer */
+.team-panel .team-footer {
+  text-align: center; padding: 6px 0 0; flex-shrink: 0;
+}
+.team-footer .comp-type {
+  font-family: 'Cinzel', serif; font-size: 14px; color: var(--text-dim);
+  letter-spacing: 1px;
+}
+.team-panel.blue .comp-type { color: var(--blue-team); }
+.team-panel.red  .comp-type { color: #FF6B80; }
+
+/* Pre-picks row */
+.team-panel .prepick-row {
+  display: flex; gap: 3px; flex-wrap: wrap; justify-content: center;
+  padding: 0 8px; min-height: 20px;
+}
+.team-panel .prepick-chip {
+  font-size: 13px; padding: 2px 8px;
+  background: rgba(200,155,60,0.08); border: 1px solid rgba(200,155,60,0.2);
+  color: var(--gold-light); font-weight: 500;
+}
+
+/* ── Center Area (50%) ── */
+.center-area {
+  flex: 2; display: flex; flex-direction: column;
+  min-width: 0; min-height: 0;
+  background: rgba(5,21,53,0.4);
+  border: 1px solid rgba(200,155,60,0.1);
+  position: relative;
+}
+.center-area::before {
+  content: ''; position: absolute; top: 0; left: 0;
+  width: 14px; height: 14px;
+  border-top: 1px solid rgba(200,155,60,0.35);
+  border-left: 1px solid rgba(200,155,60,0.35);
+}
+.center-area::after {
+  content: ''; position: absolute; top: 0; right: 0;
+  width: 14px; height: 14px;
+  border-top: 1px solid rgba(200,155,60,0.35);
+  border-right: 1px solid rgba(200,155,60,0.35);
+}
+
+/* Center Tabs */
+.center-tabs {
+  display: flex; align-items: center; gap: 2px;
+  padding: 10px 16px 4px; flex-shrink: 0;
+}
+.center-tab {
+  padding: 6px 16px; font-size: 11px; font-family: 'Cinzel', serif;
+  font-weight: 600; letter-spacing: 0.8px;
+  border: none; background: transparent; color: var(--text-dim);
+  cursor: pointer; transition: all 0.25s;
+  border-bottom: 2px solid transparent;
+}
+.center-tab:hover { color: var(--text); }
+.center-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+.center-tab .count { font-size: 9px; opacity: 0.5; margin-left: 4px; font-family: 'Inter', sans-serif; }
+
+/* Center Filters */
+.center-filters {
+  display: flex; gap: 2px; padding: 6px 16px 4px; flex-shrink: 0;
+}
+.filt-btn {
+  padding: 3px 10px; font-size: 9px; font-family: 'Inter', sans-serif; font-weight: 500;
+  letter-spacing: 0.3px; border: 1px solid transparent;
+  background: transparent; color: var(--text-dim); cursor: pointer; transition: all 0.2s;
+}
+.filt-btn:hover { color: var(--text); }
+.filt-btn.active { color: var(--gold); border-bottom: 2px solid var(--gold); font-weight: 600; }
+
+/* ── Champion List ── */
+.champ-list-wrap {
+  flex: 1; overflow-y: auto; overflow-x: hidden; padding: 4px 12px 8px;
+}
+.champ-list-wrap::-webkit-scrollbar { width: 5px; }
+.champ-list-wrap::-webkit-scrollbar-track { background: transparent; }
+.champ-list-wrap::-webkit-scrollbar-thumb { background: rgba(200,155,60,0.12); border-radius: 3px; }
+.champ-list-wrap::-webkit-scrollbar-thumb:hover { background: rgba(200,155,60,0.25); }
+
+/* Champion Row */
+.champ-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 8px; cursor: default; transition: all 0.15s;
+  border-bottom: 1px solid rgba(255,255,255,0.025);
+}
+.champ-row:nth-child(odd) { background: rgba(255,255,255,0.008); }
+.champ-row:hover { background: rgba(200,155,60,0.06); }
+.champ-row.top { background: rgba(200,155,60,0.07); }
+.champ-row.top:hover { background: rgba(200,155,60,0.12); }
+
+.champ-row .rank-num {
+  width: 32px; text-align: center; font-family: 'Cinzel', serif;
+  font-size: 16px; font-weight: 700; flex-shrink: 0;
+  color: var(--text-dim);
+}
+.champ-row .rank-num.r1 { color: var(--gold-bright); font-size: 19px; }
+.champ-row .rank-num.r2 { color: #A0B8CC; }
+.champ-row .rank-num.r3 { color: #B8946E; }
+
+.champ-row .row-avatar {
+  width: 50px; height: 50px; flex-shrink: 0;
+  clip-path: polygon(25% 5%, 75% 5%, 95% 50%, 75% 95%, 25% 95%, 5% 50%);
+  object-fit: cover; background: var(--bg-deep);
+}
+
+.champ-row .row-name-col {
+  display: flex; flex-direction: column; width: 100px; flex-shrink: 0; line-height: 1.2;
+}
+.champ-row .row-name {
+  font-family: 'Cinzel', serif; font-size: 17px; font-weight: 700;
+  color: #FFFFFF; letter-spacing: 0.5px;
+}
+.champ-row .row-name-sub {
+  font-size: 13px; color: #F0E6A0;
+}
+
+.champ-row .row-tier-crystal {
+  width: 28px; height: 28px; transform: rotate(45deg); flex-shrink: 0;
+  border: 1px solid rgba(255,255,255,0.15);
+  display: flex; align-items: center; justify-content: center;
+}
+.champ-row .row-tier-crystal span {
+  transform: rotate(-45deg); font-size: 11px; font-weight: 900;
+  font-family: 'Cinzel', serif;
+}
+.crystal-S { background: linear-gradient(135deg, #F0E6D2, #C89B3C); box-shadow: 0 0 8px rgba(200,155,60,0.5); }
+.crystal-S span { color: #4A3000; }
+.crystal-A { background: linear-gradient(135deg, #8BB8D6, #4DA0CC); box-shadow: 0 0 6px rgba(77,160,204,0.4); }
+.crystal-A span { color: #1A3A50; }
+.crystal-B { background: linear-gradient(135deg, #7DA87D, #4A8A4A); box-shadow: 0 0 4px rgba(74,138,74,0.3); }
+.crystal-B span { color: #1A3A1A; }
+
+.champ-row .row-role-tag {
+  font-size: 13px; padding: 3px 8px; width: 60px; text-align: center; flex-shrink: 0;
+  letter-spacing: 0.5px; font-weight: 600;
+}
+.rt-top     { color: var(--role-top); border: 1px solid rgba(139,115,85,0.3); }
+.rt-jungle  { color: var(--role-jungle); border: 1px solid rgba(46,189,111,0.3); }
+.rt-mid     { color: var(--role-mid); border: 1px solid rgba(139,92,246,0.3); }
+.rt-bot     { color: var(--role-bot); border: 1px solid rgba(200,155,60,0.3); }
+.rt-support { color: var(--role-support); border: 1px solid rgba(77,160,204,0.3); }
+
+.champ-row .row-wr {
+  font-size: 16px; color: var(--text-dim); width: 80px; text-align: right; flex-shrink: 0;
+}
+.champ-row .row-wr strong { color: var(--text); }
+
+.champ-row .row-reasons {
+  flex: 1; display: flex; gap: 3px; flex-wrap: wrap; min-width: 0;
+}
+.row-tag {
+  font-size: 12px; padding: 2px 8px; white-space: nowrap;
+  font-weight: 500; letter-spacing: 0.2px; border: 1px solid transparent;
+}
+.row-tag.cd { background: rgba(46,189,111,0.12); color: #4AE87A; border-color: rgba(46,189,111,0.3); font-weight: 700; }
+.row-tag.ct { background: rgba(46,189,111,0.08); color: #3DD068; border-color: rgba(46,189,111,0.2); }
+.row-tag.cb { background: rgba(232,64,87,0.1); color: #FF6B80; border-color: rgba(232,64,87,0.25); }
+.row-tag.sy { background: rgba(10,200,255,0.08); color: #5ED4FF; border-color: rgba(10,200,255,0.2); }
+.row-tag.tr { background: rgba(200,155,60,0.1); color: var(--gold-light); border-color: rgba(200,155,60,0.25); font-weight: 600; }
+.row-tag.df { background: rgba(255,255,255,0.03); color: var(--text-dim); border-color: rgba(255,255,255,0.06); }
+.row-tag.bm { background: rgba(167,139,250,0.1); color: #C4A8FC; border-color: rgba(167,139,250,0.25); font-weight: 600; }
+.row-tag.bs { background: rgba(167,139,250,0.06); color: #D8B4FE; border-color: rgba(167,139,250,0.18); }
+.row-tag.bc { background: rgba(248,113,113,0.12); color: #F87171; border-color: rgba(248,113,113,0.3); }
+.row-tag.pr { background: rgba(139,92,246,0.1); color: #C4A8FC; border-color: rgba(139,92,246,0.25); }
+
+.champ-row .row-bar {
+  width: 70px; height: 6px; background: rgba(255,255,255,0.05); flex-shrink: 0; overflow: hidden;
+}
+.champ-row .row-bar-inner {
+  height: 100%; transition: width 0.5s;
+  background: linear-gradient(90deg, var(--magic-deep), var(--magic-glow));
+}
+.champ-row .row-bar-inner.gold-bar { background: linear-gradient(90deg, #6B4F1A, var(--gold), var(--gold-bright)); }
+.champ-row .row-bar-inner.ban-bar { background: linear-gradient(90deg, #5B21B6, #C084FC); }
+
+.champ-row .row-score {
+  font-family: 'Cinzel', serif; font-size: 24px; font-weight: 700;
+  color: var(--gold); width: 55px; text-align: right; flex-shrink: 0;
+}
+.champ-row .row-score.ban-score { color: var(--purple-glow); }
+
+/* Row states */
+.champ-row.clickable { cursor: pointer; }
+.champ-row.clickable:hover { background: rgba(46,189,111,0.08); }
+.champ-row.selected { background: rgba(200,155,60,0.12) !important; border: 1px solid rgba(200,155,60,0.35); }
+.champ-row.unavailable { opacity: 0.35; pointer-events: none; }
+.badge-ban, .badge-pick {
+  font-size: 7px; padding: 1px 4px; font-weight: 700; letter-spacing: 0.5px; margin-left: 4px;
+}
+.badge-ban { color: #FF6B80; }
+.badge-pick { color: #6BB5D9; }
+
+/* ── Counter Section ── */
+.counter-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 16px 2px; flex-shrink: 0;
+}
+.counter-header .line { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(46,189,111,0.35), transparent); }
+.counter-header .diamond {
+  width: 7px; height: 7px; background: rgba(46,189,111,0.5);
+  transform: rotate(45deg); flex-shrink: 0;
+}
+.counter-header span {
+  font-family: 'Cinzel', serif; font-size: 9px; font-weight: 600;
+  letter-spacing: 2px; color: var(--green-bright); text-transform: uppercase;
+}
+
+/* ── Search Row ── */
+.search-row {
+  display: flex; gap: 8px; align-items: center;
+  padding: 6px 16px; flex-shrink: 0;
+}
+.search-input {
+  flex: 1; padding: 6px 10px; background: rgba(2,16,36,0.8);
+  border: 1px solid rgba(200,155,60,0.2); color: var(--text);
+  font-size: 11px; font-family: 'Inter', sans-serif; outline: none;
+}
+.search-input:focus { border-color: var(--gold); }
+.search-input::placeholder { color: var(--text-muted); }
+
+.manual-actions { display: flex; gap: 3px; flex-shrink: 0; }
+.act-btn {
+  padding: 5px 9px; font-size: 9px; font-family: 'Inter', sans-serif;
+  font-weight: 600; letter-spacing: 0.5px; cursor: pointer;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.03); color: var(--text-dim);
+  transition: all 0.15s; white-space: nowrap;
+}
+.act-btn:hover { background: rgba(255,255,255,0.06); color: var(--text); }
+.act-btn.ban-hover:hover { border-color: #FF6B80; color: #FF6B80; background: rgba(232,64,87,0.08); }
+.act-btn.pick-hover:hover { border-color: var(--green-bright); color: var(--green-bright); background: rgba(46,189,111,0.08); }
+.act-btn.reset-hover:hover { border-color: #F0D060; color: #F0D060; }
+
+/* Search dropdown */
+.search-drop {
+  max-height: 160px; overflow-y: auto; margin: 0 16px;
+  background: var(--bg-void); border: 1px solid rgba(255,255,255,0.06);
+}
+.search-drop .sr-item {
+  display: flex; align-items: center; gap: 8px; padding: 6px 10px;
+  cursor: pointer; font-size: 11px;
+  border-bottom: 1px solid rgba(255,255,255,0.02);
+}
+.search-drop .sr-item:hover { background: rgba(200,155,60,0.08); }
+.search-drop .sr-item img {
+  width: 28px; height: 28px;
+  clip-path: polygon(25% 5%, 75% 5%, 95% 50%, 75% 95%, 25% 95%, 5% 50%);
+  object-fit: cover;
+}
+
+/* ── Waiting ── */
+.waiting-overlay {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 16px;
+  color: var(--text-dim); text-align: center;
+}
+.hex-loader {
+  position: relative; width: 56px; height: 56px;
+}
+.hex-loader .outer {
+  position: absolute; inset: 3px;
+  clip-path: polygon(25% 5%, 75% 5%, 95% 50%, 75% 95%, 25% 95%, 5% 50%);
+  background: conic-gradient(var(--gold), var(--gold-dim), transparent 70%);
+  animation: hexSpin 2s linear infinite;
+}
+.hex-loader .inner {
+  position: absolute; inset: 8px;
+  clip-path: polygon(25% 5%, 75% 5%, 95% 50%, 75% 95%, 25% 95%, 5% 50%);
+  background: var(--bg-void);
+}
+.hex-loader .core {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: 5px; height: 5px; background: var(--gold);
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+  box-shadow: 0 0 10px var(--gold); animation: dotPulse 1.5s infinite;
+}
+@keyframes hexSpin { to { transform: rotate(360deg); } }
+.waiting-title {
+  font-family: 'Cinzel', serif; font-size: 15px; color: var(--text); font-weight: 600;
+  letter-spacing: 1px;
+}
+.waiting-sub { font-size: 11px; color: var(--text-dim); max-width: 320px; }
+
+.no-data { color: var(--text-dim); font-size: 12px; text-align: center; padding: 40px 0; }
+
+/* ── Responsive ── */
+@media (max-width: 960px) {
+  .team-panel { min-width: 120px; }
+  .pick-slot .hex-img-wrap, .pick-slot .hex-img { width: 48px; height: 48px; }
+  .pick-slot .pick-champ-name { font-size: 13px; }
+  .pick-slot .pick-pos-label { font-size: 10px; }
+  .champ-row .row-reasons { display: none; }
+  .champ-row .row-bar { width: 36px; }
+}
+@media (max-width: 720px) {
+  .teams-area { flex-direction: column; }
+  .team-panel { flex-direction: row; flex: none; height: 90px; gap: 4px; }
+  .center-area { flex: 1; }
+  .ban-row-outer { gap: 8px; }
+  .ban-slot { width: 32px; height: 32px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════ TOP BAR ════════════════════ -->
+<div class="topbar">
+  <div class="logo">
+    <div class="logo-icon"></div>
+    BP 辅助<span class="ver" id="versionTag">v2.2</span>
+  </div>
+  <div class="status-group">
+    <div class="timer-box" id="timerBox">
+      <span class="timer-phase" id="timerPhase"></span>
+      <span id="timerValue">--</span>
+    </div>
+    <div class="status-dot">
+      <div class="dot" id="statusDot"></div>
+      <span id="statusText">检测中...</span>
+    </div>
+    <span class="meta-ver" id="metaVer"></span>
+    <button class="btn" onclick="refreshMeta()">更新数据</button>
+    <button class="btn" id="manualBtn" onclick="toggleManual()">手动模式</button>
+    <span class="my-pos-tag" id="myPosTag" style="display:none;"></span>
+  </div>
+</div>
+
+<!-- ════════════════════ DRAFT SCREEN ════════════════════ -->
+<div class="draft-screen" id="draftScreen">
+
+  <!-- BAN ROW -->
+  <div class="ban-row-outer" id="banRow">
+    <div class="ban-group" id="blueBans"></div>
+    <div class="ban-separator">BANS</div>
+    <div class="ban-group" id="redBans"></div>
+  </div>
+
+  <!-- TEAMS + CENTER: 1 : 2 : 1 -->
+  <div class="teams-area">
+
+    <!-- BLUE TEAM (25%) -->
+    <div class="team-panel blue" id="bluePanel">
+      <div class="team-header-row">
+        <div class="team-ind"></div>
+        <span class="team-name">蓝方</span>
+      </div>
+      <div class="prepick-row" id="bluePrePicks"></div>
+      <div id="bluePicks"></div>
+      <div class="team-footer"><span class="comp-type" id="blueComp"></span></div>
+    </div>
+
+    <!-- CENTER (50%) -->
+    <div class="center-area" id="centerArea">
+
+      <!-- Waiting -->
+      <div class="waiting-overlay" id="waitingOverlay">
+        <div class="hex-loader">
+          <div class="outer"></div><div class="inner"></div><div class="core"></div>
+        </div>
+        <div class="waiting-title" id="waitingTitle">等待进入英雄选择...</div>
+        <div class="waiting-sub">BP 阶段自动更新推荐 · 也可切换手动模式</div>
+      </div>
+
+      <!-- Rec Content -->
+      <div id="recContent" style="display:none;flex-direction:column;flex:1;min-height:0;">
+
+        <div class="center-tabs">
+          <button class="center-tab active" data-tab="rec" onclick="switchTab('rec',this)">推荐<span class="count" id="recCount"></span></button>
+          <button class="center-tab" data-tab="ban" onclick="switchTab('ban',this)">禁用<span class="count" id="banCount"></span></button>
+          <button class="center-tab" data-tab="all" onclick="switchTab('all',this)">英雄<span class="count" id="allCount"></span></button>
+        </div>
+
+        <div id="filterRow" style="padding:0 16px;flex-shrink:0;">
+          <div class="center-filters">
+            <button class="filt-btn active" data-role="all" onclick="setFilter('all',this)">全部</button>
+            <button class="filt-btn" data-role="top" onclick="setFilter('top',this)">上单</button>
+            <button class="filt-btn" data-role="jungle" onclick="setFilter('jungle',this)">打野</button>
+            <button class="filt-btn" data-role="mid" onclick="setFilter('mid',this)">中单</button>
+            <button class="filt-btn" data-role="bot" onclick="setFilter('bot',this)">下路</button>
+            <button class="filt-btn" data-role="support" onclick="setFilter('support',this)">辅助</button>
+          </div>
+        </div>
+
+        <!-- Search (manual mode) -->
+        <div class="search-row" id="searchRow" style="display:none;">
+          <input class="search-input" id="champSearch" placeholder="搜索英雄..."
+                 oninput="searchChampions(this.value)" onfocus="searchChampions(this.value)">
+          <select id="posSelect" onchange="setMyPos(this.value)" style="padding:5px 8px;background:rgba(2,16,36,0.8);border:1px solid rgba(200,155,60,0.2);color:var(--text);font-size:10px;font-family:'Inter',sans-serif;">
+            <option value="">位置</option>
+            <option value="top">上单</option><option value="jungle">打野</option>
+            <option value="mid">中单</option><option value="bot">下路</option><option value="support">辅助</option>
+          </select>
+          <div class="manual-actions">
+            <button class="act-btn ban-hover" onclick="manualAction('my','ban')">我方Ban</button>
+            <button class="act-btn pick-hover" onclick="manualAction('my','pick')">我方Pick</button>
+            <button class="act-btn ban-hover" onclick="manualAction('enemy','ban')">敌方Ban</button>
+            <button class="act-btn pick-hover" onclick="manualAction('enemy','pick')">敌方Pick</button>
+            <button class="act-btn reset-hover" onclick="resetManual()">重置</button>
+          </div>
+        </div>
+        <div class="search-drop" id="searchResults" style="display:none;"></div>
+
+        <!-- Counter section -->
+        <div class="counter-header" id="counterSection" style="display:none;">
+          <span class="line"></span><span class="diamond"></span><span class="line"></span>
+          <span>克制敌方</span>
+          <span class="line"></span><span class="diamond"></span><span class="line"></span>
+        </div>
+
+        <!-- Champ list -->
+        <div class="champ-list-wrap" id="champList"></div>
+      </div>
+    </div>
+
+    <!-- RED TEAM (25%) -->
+    <div class="team-panel red" id="redPanel">
+      <div class="team-header-row">
+        <div class="team-ind"></div>
+        <span class="team-name">红方</span>
+      </div>
+      <div class="prepick-row" id="redPrePicks"></div>
+      <div id="redPicks"></div>
+      <div class="team-footer"><span class="comp-type" id="redComp"></span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   State
+   ═══════════════════════════════════════════════════════════ */
+let allRecs=[], banRecs=[], allChamps=[], champData={}, counterHeroes=[];
+let currentFilter='all', currentTab='rec', isManual=false, selectedKey=null;
+const RC={top:'上单',jungle:'打野',mid:'中单',bot:'下路',support:'辅助',utility:'辅助',unknown:'未知'};
+const POS=['top','jungle','mid','bot','support'];
+
+async function loadChampData() {
+  try{const r=await fetch('/api/champions');champData=await r.json();}catch(e){}
+}
+function cn(k){return champData[String(k)]?.name||'#'+k;}
+function cimg(k){return champData[String(k)]?.image_url||'';}
+function crole(k){return champData[String(k)]?.role||'unknown';}
+
+/* ═══════════════════════════════════════════════════════════
+   Draw Team Panels (with name + role)
+   ═══════════════════════════════════════════════════════════ */
+function drawTeamPanel(panelId, picks) {
+  const el = document.getElementById(panelId);
+  const names = [];
+  for(let i=0;i<5;i++){
+    if(i<picks.length){
+      const p=picks[i];
+      const k=typeof p==='object'?p.champion_id:p;
+      const pos=typeof p==='object'?(p.position||crole(k)):crole(k);
+      names.push({key:k,pos:pos});
+    }else{names.push(null);}
+  }
+
+  el.innerHTML = names.map((n,i)=>{
+    const posLabels=['上单','打野','中单','下路','辅助'];
+    if(n){
+      const posCN=RC[n.pos]||n.pos||'?';
+      const posCls='role-bar-'+n.pos;
+      return `<div class="pick-slot">
+        <div class="hex-img-wrap">
+          <img class="hex-img" src="${cimg(n.key)}" alt="${cn(n.key)}" loading="lazy"
+               onerror="this.style.display='none'">
+          <div class="hex-role-bar ${posCls}"></div>
+        </div>
+        <div class="pick-info">
+          <span class="pick-pos-label">${posCN}</span>
+          <span class="pick-champ-name">${cn(n.key)}</span>
+        </div>
+      </div>`;
+    }else{
+      return `<div class="pick-slot empty">
+        <div class="hex-img-wrap"></div>
+        <div class="pick-info">
+          <span class="pick-pos-label">${posLabels[i]}</span>
+          <span class="pick-champ-name">—</span>
+        </div>
+      </div>`;
+    }
+  }).join('');
+}
+
+function drawBans(blueIds, redIds) {
+  const renderSlots=(ids,elId)=>{
+    const el=document.getElementById(elId);
+    let h='';
+    for(let i=0;i<5;i++){
+      if(i<ids.length){
+        h+=`<div class="ban-slot filled"><img src="${cimg(ids[i])}" alt="${cn(ids[i])}" loading="lazy" onerror="this.style.background='#2a1015';this.innerHTML='<span style=font-size:20px;opacity:0.5>🚫</span>'"></div>`;
+      }else{
+        h+=`<div class="ban-slot empty"><span class="ban-placeholder">&times;</span></div>`;
+      }
+    }
+    el.innerHTML=h;
+  };
+  renderSlots(blueIds,'blueBans');
+  renderSlots(redIds,'redBans');
+}
+
+function drawPrePicks(elId, ids) {
+  const el=document.getElementById(elId);
+  if(!ids||ids.length===0){el.innerHTML='';return;}
+  el.innerHTML=ids.map(k=>`<span class="prepick-chip">${cn(k)}</span>`).join('');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Draw Champion List (center)
+   ═══════════════════════════════════════════════════════════ */
+function reasonClass(reason){
+  if(reason.includes('对位被'))return'cb';
+  if(reason.includes('对位克制'))return'cd';
+  if(reason.includes('被')&&reason.includes('克制'))return'cb';
+  if(reason.includes('克制'))return'ct';
+  if(reason.includes('协同'))return'sy';
+  if(reason.includes('队友擅长'))return'sy';
+  if(reason.includes('T0')||reason.includes('强势')||reason.includes('版本')||reason.includes('综合'))return'tr';
+  if(reason.includes('慎ban'))return'pr';
+  return'df';
+}
+
+function drawChampList(items, type) {
+  const el=document.getElementById('champList');
+  if(!items||items.length===0){el.innerHTML='<div class="no-data">暂无数据</div>';return;}
+  const maxScore=Math.max(1,items[0]?.score||0);
+
+  el.innerHTML=items.map((r,i)=>{
+    let rowCls='';
+    if(type==='rec'){if(i===0)rowCls=' top';if(isManual)rowCls+=' clickable';}
+    if(type==='all'){
+      if(r.available)rowCls+=' clickable';
+      else rowCls+=' unavailable';
+      if(r._sel)rowCls+=' selected';
+    }
+    if(type==='ban'&&isManual)rowCls+=' clickable';
+
+    const rankCls=i===0?'r1':i===1?'r2':i===2?'r3':'';
+    const img=r.image_url||cimg(r.champion_id)||'';
+    const name=r.name||cn(r.champion_id)||'?';
+    const tier=r.tier||'B';
+    const role=r.role||crole(r.champion_id)||'unknown';
+    const wr=r.winrate||50;
+    const pct=Math.min(100,Math.max(4,Math.round((r.score/maxScore)*100)));
+
+    let nameExtra='';
+    if(r.banned)nameExtra='<span class="badge-ban">BAN</span>';
+    else if(r.picked)nameExtra='<span class="badge-pick">PICK</span>';
+
+    let reasonHtml='';
+    if(r.reasons&&r.reasons.length){
+      reasonHtml=r.reasons.map(rr=>{
+        let cls=reasonClass(rr);
+        if(type==='ban'){
+          if(rr.includes('协同'))cls='bs';
+          else if(rr.includes('克制'))cls='bc';
+          else if(rr.includes('慎ban'))cls='pr';
+          else cls='bm';
+        }
+        return`<span class="row-tag ${cls}">${rr}</span>`;
+      }).join('');
+    }
+
+    let barCls='';
+    if(type==='ban')barCls=' ban-bar';
+    else if(tier==='S')barCls=' gold-bar';
+
+    let scoreHtml='';
+    if(type==='ban')scoreHtml=`<span class="row-score ban-score">${r.score.toFixed(1)}</span>`;
+    else if(r.score!==undefined)scoreHtml=`<span class="row-score">${r.score.toFixed(0)}</span>`;
+
+    const onclick=(isManual||(type==='all'&&r.available))
+      ?`onclick="selectChampFromList(${r.champion_id||r.key},this,'${type}')"`:'';
+    const key=r.champion_id||r.key;
+
+    return`<div class="champ-row${rowCls}"${onclick} data-key="${key}">
+      <span class="rank-num ${rankCls}">#${i+1}</span>
+      <img class="row-avatar" src="${img}" alt="${name}" loading="lazy"
+           onerror="this.style.display='none'">
+      <div class="row-name-col">
+        <span class="row-name">${name}${nameExtra}</span>
+        <span class="row-name-sub">${RC[role]||role}</span>
+      </div>
+      <div class="row-tier-crystal crystal-${tier}"><span>${tier}</span></div>
+      <span class="row-role-tag rt-${role}">${RC[role]||role}</span>
+      <span class="row-wr">WR <strong>${wr}%</strong></span>
+      <span class="row-reasons">${reasonHtml}</span>
+      <span class="row-bar"><span class="row-bar-inner${barCls}" style="width:${pct}%"></span></span>
+      ${scoreHtml}
+    </div>`;
+  }).join('');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Render
+   ═══════════════════════════════════════════════════════════ */
+function renderRecs(){
+  let recs=allRecs;
+  if(currentFilter!=='all')recs=recs.filter(r=>r.role===currentFilter);
+  document.getElementById('recCount').textContent=recs.length?`(${recs.length})`:'';
+  drawChampList(recs,'rec');
+
+  // Counter section
+  if(counterHeroes&&counterHeroes.length>0&&currentTab==='rec'){
+    const recIds=new Set(allRecs.map(r=>r.champion_id));
+    const unique=counterHeroes.filter(c=>!recIds.has(c.champion_id));
+    if(unique.length>0){
+      document.getElementById('counterSection').style.display='';
+      const list=document.getElementById('champList');
+      const counterHtml=unique.map(c=>{
+        const targets=(c.counters||[]).join(' · ');
+        const onclick=isManual?`onclick="selectChampFromList(${c.champion_id},this,'counter')"`:'';
+        return`<div class="champ-row${isManual?' clickable':''}"${onclick} data-key="${c.champion_id}">
+          <span class="rank-num" style="color:var(--green);">&#8599;</span>
+          <img class="row-avatar" src="${c.image_url||''}" alt="${c.name}" loading="lazy" onerror="this.style.display='none'">
+          <div class="row-name-col"><span class="row-name">${c.name}</span></div>
+          <span style="font-size:9px;color:var(--green-bright);flex:1;">克制 <strong>${targets}</strong></span>
+        </div>`;
+      }).join('');
+      list.insertAdjacentHTML('beforeend',counterHtml);
+    }else{document.getElementById('counterSection').style.display='none';}
+  }else{document.getElementById('counterSection').style.display='none';}
+}
+
+function renderBans(){
+  document.getElementById('banCount').textContent=banRecs.length?`(${banRecs.length})`:'';
+  drawChampList(banRecs,'ban');
+}
+
+function renderAll(){
+  let champs=allChamps;
+  if(currentFilter!=='all')champs=champs.filter(c=>c.role===currentFilter);
+  champs=champs.map(c=>({...c,champion_id:c.key,_sel:c.key===selectedKey,reasons:[],score:c.tier==='S'?100:c.tier==='A'?65:c.tier==='B'?35:15}));
+  document.getElementById('allCount').textContent=`(${champs.filter(c=>c.available).length})`;
+  drawChampList(champs,'all');
+}
+
+function switchTab(tab,el){
+  currentTab=tab;
+  document.querySelectorAll('.center-tab').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('filterRow').style.display=(tab==='ban')?'none':'';
+  document.getElementById('counterSection').style.display='none';
+  if(tab==='rec')renderRecs();
+  else if(tab==='ban')renderBans();
+  else{loadAllChamps();}
+}
+
+function setFilter(role,el){
+  currentFilter=role;
+  document.querySelectorAll('.filt-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  if(currentTab==='rec')renderRecs();
+  else if(currentTab==='all')renderAll();
+}
+
+async function loadAllChamps(){
+  try{const r=await fetch('/api/available');allChamps=await r.json();renderAll();}catch(e){}
+}
+
+function selectChampFromList(key,el,type){
+  if(!isManual&&type==='all'&&!el.classList.contains('clickable'))return;
+  selectedKey=key;
+  document.querySelectorAll('.champ-row').forEach(r=>r.classList.remove('selected'));
+  if(el)el.classList.add('selected');
+  document.getElementById('champSearch').value=cn(key);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Search & Manual Actions
+   ═══════════════════════════════════════════════════════════ */
+async function searchChampions(q){
+  const el=document.getElementById('searchResults');
+  if(!q||q.trim().length<1){el.style.display='none';return;}
+  try{
+    const r=await fetch('/api/search?q='+encodeURIComponent(q));
+    const results=await r.json();
+    if(!results.length){el.style.display='none';return;}
+    el.style.display='block';
+    el.innerHTML=results.map(c=>`<div class="sr-item" onclick="selectSearchResult(${c.key},this)" style="${c.key===selectedKey?'background:rgba(200,155,60,0.1);':''}">
+      <img src="${c.image_url}" onerror="this.style.display='none'">
+      <span style="flex:1;">${c.name}</span>
+      <span style="font-size:9px;color:var(--text-dim);">${RC[c.role]||c.role}</span>
+      <span style="font-size:9px;color:${c.tier==='S'?'var(--gold)':c.tier==='A'?'#4DA0CC':'var(--text-dim)'};">${c.tier}</span>
+    </div>`).join('');
+  }catch(e){el.style.display='none';}
+}
+
+function selectSearchResult(key,rowEl){
+  selectedKey=key;
+  document.querySelectorAll('.sr-item').forEach(d=>d.style.background='');
+  rowEl.style.background='rgba(200,155,60,0.1)';
+  document.getElementById('champSearch').value=cn(key);
+  document.getElementById('searchResults').style.display='none';
+}
+
+async function manualAction(team,action){
+  if(!selectedKey){alert('请先在列表或搜索中点击选择一个英雄');return;}
+  const ep=action==='ban'?'/api/manual/add-ban':'/api/manual/add-pick';
+  try{
+    let body={team,champion_key:selectedKey};
+    if(action==='pick'){const ps=document.getElementById('posSelect');body.position=ps.value||crole(selectedKey);}
+    const r=await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const d=await r.json();
+    if(d.ok){selectedKey=null;document.getElementById('champSearch').value='';document.getElementById('searchResults').style.display='none';await loadAllChamps();await poll();}
+  }catch(e){}
+}
+
+async function setMyPos(pos){
+  try{await fetch('/api/manual/set-position',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({position:pos})});await poll();}catch(e){}
+}
+
+async function resetManual(){
+  try{
+    await fetch('/api/manual/reset',{method:'POST'});
+    selectedKey=null;document.getElementById('champSearch').value='';document.getElementById('searchResults').style.display='none';
+    allRecs=[];await loadAllChamps();await poll();
+  }catch(e){}
+}
+
+async function toggleManual(){
+  isManual=!isManual;
+  const btn=document.getElementById('manualBtn');
+  const sr=document.getElementById('searchRow');
+  if(isManual){
+    btn.classList.add('active');btn.textContent='手动:ON';
+    sr.style.display='flex';
+    try{await fetch('/api/manual/start',{method:'POST'});}catch(e){}
+    await loadAllChamps();
+    switchTab('all',document.querySelector('[data-tab="all"]'));
+  }else{
+    btn.classList.remove('active');btn.textContent='手动模式';
+    sr.style.display='none';
+    allRecs=[];try{await fetch('/api/manual/stop',{method:'POST'});}catch(e){}
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Timer
+   ═══════════════════════════════════════════════════════════ */
+function updateTimer(timer){
+  const box=document.getElementById('timerBox');
+  if(!timer||timer.total_sec<=0||timer.phase==='idle'){box.style.display='none';return;}
+  box.style.display='flex';
+  const rem=timer.remaining_sec;
+  document.getElementById('timerValue').textContent=`${Math.floor(rem/60)}:${String(rem%60).padStart(2,'0')}`;
+  document.getElementById('timerPhase').textContent=timer.phase==='BAN_PICK'?'BP':timer.phase;
+  box.classList.toggle('urgent',rem<=10&&rem>0);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Main Poll
+   ═══════════════════════════════════════════════════════════ */
+async function poll(){
+  try{
+    const r=await fetch('/api/state');
+    const s=await r.json();
+    const dot=document.getElementById('statusDot');
+    const txt=document.getElementById('statusText');
+    const waiting=document.getElementById('waitingOverlay');
+    const recContent=document.getElementById('recContent');
+
+    if(s.manual_mode||isManual){
+      dot.className='dot in-select';txt.textContent='手动模式';
+      waiting.style.display='none';recContent.style.display='flex';
+    }else if(!s.connected){
+      dot.className='dot';txt.textContent='等待客户端';
+      document.getElementById('waitingTitle').textContent='等待客户端启动...';
+      waiting.style.display='flex';recContent.style.display='none';
+    }else if(!s.in_champ_select){
+      dot.className='dot connected';txt.textContent='已连接';
+      const pm={Lobby:'大厅',Matchmaking:'匹配中',ReadyCheck:'就绪检查',ChampSelect:'选英雄',InProgress:'游戏中',GameComplete:'结算',EndOfGame:'结算'};
+      document.getElementById('waitingTitle').textContent='等待进入英雄选择... '+(pm[s.gameflow_phase]||s.gameflow_phase||'');
+      waiting.style.display='flex';recContent.style.display='none';
+    }else{
+      dot.className='dot in-select';txt.textContent='BP 进行中';
+      waiting.style.display='none';recContent.style.display='flex';
+    }
+
+    // Ban row
+    if(s.connected&&(s.my_team_bans?.length||s.enemy_bans?.length||s.in_champ_select)){
+      document.getElementById('banRow').style.display='';
+      drawBans(s.my_team_bans||[],s.enemy_bans||[]);
+    }
+
+    // Team panels
+    drawTeamPanel('bluePicks',s.my_team_picks||[]);
+    drawTeamPanel('redPicks',s.enemy_picks||[]);
+    drawPrePicks('bluePrePicks',s.my_prepicks||[]);
+    drawPrePicks('redPrePicks',s.enemy_prepicks||[]);
+
+    // My position
+    const posEl=document.getElementById('myPosTag');
+    const pos=s.my_position;
+    if(pos&&RC[pos]){posEl.style.display='';posEl.textContent=RC[pos];}else{posEl.style.display='none';}
+
+    // Recommendations
+    if(s.recommendations?.length){allRecs=s.recommendations;counterHeroes=s.counter_heroes||[];}
+    banRecs=s.ban_recommendations||[];
+    if(currentTab==='rec')renderRecs();
+    else if(currentTab==='ban')renderBans();
+    else if(currentTab==='all')loadAllChamps();
+
+    updateTimer(s.timer);
+
+    // Comp footers
+    updateComp('blueComp',s.my_composition);
+    updateComp('redComp',s.enemy_composition);
+
+  }catch(e){document.getElementById('statusText').textContent='连接失败';}
+}
+
+function updateComp(elId,comp){
+  const el=document.getElementById(elId);
+  if(comp&&comp.type!=='unformed'){
+    el.textContent=(comp.icon||'')+' '+comp.name;
+  }else{el.textContent='';}
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Meta & Version
+   ═══════════════════════════════════════════════════════════ */
+async function checkMeta(){
+  try{
+    const r=await fetch('/api/meta/status');const s=await r.json();
+    const el=document.getElementById('metaVer');
+    if(s.source==='live'){
+      const age=s.age_hours;
+      el.textContent=`v${s.version} ${age<1?'实时':age<24?Math.round(age)+'h':Math.round(age/24)+'d'}`;
+      el.style.color='var(--green)';
+    }else{el.textContent=`内置 v${s.version}`;el.style.color='var(--text-dim)';}
+  }catch(e){}
+}
+
+async function refreshMeta(){
+  const btn=event.target;const orig=btn.textContent;
+  btn.textContent='更新中...';btn.disabled=true;
+  try{
+    const r=await fetch('/api/meta/refresh',{method:'POST'});const d=await r.json();
+    alert(d.ok?`已更新: ${d.message}\n${d.champions_updated} 个英雄`:'更新失败: '+d.message);
+    if(d.ok){await loadChampData();await poll();await checkMeta();}
+  }catch(e){alert('更新失败');}
+  btn.textContent=orig;btn.disabled=false;
+}
+
+async function checkVersion(){
+  try{const r=await fetch('/api/version');document.getElementById('versionTag').textContent='v'+(await r.json()).version;}catch(e){}
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Init
+   ═══════════════════════════════════════════════════════════ */
+loadChampData();checkVersion();checkMeta();poll();
+setInterval(poll,1500);setInterval(checkMeta,60000);
+
+document.addEventListener('click',(e)=>{
+  const sr=document.getElementById('searchResults');
+  const si=document.getElementById('champSearch');
+  if(sr&&!sr.contains(e.target)&&e.target!==si)sr.style.display='none';
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+# Runtime
+logs/
+conversation_log.txt
+
+# Build output
+dist/
+build/
+*.spec
+__pycache__/
+*.pyc
+
+# Downloaded / cached data (will re-fetch on first run)
+data/champion_data.json
+data/champion_meta_live.json
+data/img_cache/
+
+# Background image (served from static/)
+2379016.webp
+
+# IDE
+.vscode/
+.idea/

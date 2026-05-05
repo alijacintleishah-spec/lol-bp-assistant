@@ -1,0 +1,8 @@
+flask>=2.0
+flask-cors>=4.0
+requests>=2.28
+urllib3>=1.26
+websocket-client>=1.4
+psutil>=5.9
+Pillow>=9.0
+pywebview>=5.0
