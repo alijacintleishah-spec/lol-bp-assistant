@@ -1,7 +1,7 @@
 # LoL BP Assistant — 项目日志
 
 > 最后更新: 2026-05-05
-> 当前版本: v2.2.0
+> 当前版本: v1.1
 
 ---
 
@@ -297,6 +297,14 @@ WeGame 国服客户端的 LCU API 与国际版完全不同——标准 `lol-*` �
 - `lcu.py`: `subprocess.run(wmic)` 添加 `creationflags=CREATE_NO_WINDOW`
 - `desktop_app.py`: `subprocess.Popen` 启动浏览器添加 `CREATE_NO_WINDOW`
 - `launch.pyw`: 同上
+
+### 2026-05-05 (v1.1 修复版)
+
+**修复数据刷新混乱**
+
+- `_state_hash()` 移除 `r`（推荐ID列表）和 `br`（ban推荐ID列表）——推荐数据是引擎每次重算的派生结果，不应参与状态变化检测
+- 新增 `_sidebar_hash()`：侧边栏只在 picks/bans/prepicks/position 实际变化时才重建，不再每 2 秒拆了重建
+- 所有重置点（`_set_filter`、`_toggle_mode`、`_manual_action`、`_manual_reset`、`_on_tab_changed`）同步重置 `_last_sidebar_hash`
 
 ### 历史版本
 

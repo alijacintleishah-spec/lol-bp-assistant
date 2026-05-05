@@ -1,4 +1,4 @@
-# LoL BP Assistant v2.1
+# LoL BP Assistant v1.1
 
 LoL 排位赛实时 BP 辅助工具 — 自动读取 LCU 数据，综合协同 + 克制给出最优英雄推荐。
 

@@ -39,7 +39,7 @@ else:
                         filename=os.path.join(LOG_DIR, 'lol-bp.log'), filemode='a')
 logger = logging.getLogger(__name__)
 
-VERSION = "2.2.0"
+VERSION = "1.1"
 
 # ── 全局状态 ───────────────────────────────────────────────────────────────────
 champ_select_state = {

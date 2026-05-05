@@ -384,6 +384,7 @@ class LoLBPUI:
         self.selected_champ = None
         self._filter_pos = "all"
         self._last_state_hash = ""
+        self._last_sidebar_hash = ""
         self._refresh_busy = False
         self._active_tab = "pick"
         self._img_refs: list = []
@@ -519,6 +520,7 @@ class LoLBPUI:
         self._active_tab = {0: "pick", 1: "ban", 2: "all"}.get(idx, "pick")
         # 切换时立即重建当前 tab（可能已过期）
         self._last_state_hash = ""
+        self._last_sidebar_hash = ""
         self._smart_refresh()
 
     # ── Sidebar ──
@@ -620,9 +622,17 @@ class LoLBPUI:
                 "p": sorted([p.get("champion_id",p) if isinstance(p,dict) else p
                     for p in s.get("my_team_picks",[]) + s.get("enemy_picks",[])]),
                 "pp": sorted(s.get("my_prepicks",[]) + s.get("enemy_prepicks",[])),
-                "po": s.get("my_position",""),
-                "r": [r.get("champion_id") for r in s.get("recommendations",[])],
-                "br": [r.get("champion_id") for r in s.get("ban_recommendations",[])]}, sort_keys=True)
+                "po": s.get("my_position","")}, sort_keys=True)
+        return hashlib.md5(raw.encode()).hexdigest()
+
+    def _sidebar_hash(self, state):
+        raw = json.dumps({
+            "b": sorted(state.get("my_team_bans", []) + state.get("enemy_bans", [])),
+            "p": sorted([p.get("champion_id", p) if isinstance(p, dict) else p
+                for p in state.get("my_team_picks", []) + state.get("enemy_picks", [])]),
+            "pp": sorted(state.get("my_prepicks", []) + state.get("enemy_prepicks", [])),
+            "po": state.get("my_position", ""),
+        }, sort_keys=True)
         return hashlib.md5(raw.encode()).hexdigest()
 
     def _smart_refresh(self):
@@ -641,18 +651,6 @@ class LoLBPUI:
         if self.manual_mode:
             self.status_label.configure(text="● 手动模式", fg=CK["a1"])
             self._rebuild_manual_tab(self._active_tab)
-        else:
-            s = self.state_ref
-            if s.get("in_champ_select"):
-                self.status_label.configure(text="● 选人中", fg=CK["a3"])
-            elif s.get("connected"):
-                self.status_label.configure(text="● 已连接", fg=CK["green"])
-            else:
-                self.status_label.configure(text="○ 未连接", fg=CK["dim"])
-            self._rebuild_auto_tab(self._active_tab)
-
-        # 侧边栏始终刷新（轻量）
-        if self.manual_mode:
             ms = self.manual_ref_cb()
             my_pick_ids = [p["champion_id"] for p in ms.get("my_picks", [])]
             enemy_pick_ids = [p["champion_id"] for p in ms.get("enemy_picks", [])]
@@ -663,8 +661,21 @@ class LoLBPUI:
                   "my_composition": analyze_composition(my_pick_ids),
                   "enemy_composition": analyze_composition(enemy_pick_ids)}
         else:
+            s = self.state_ref
+            if s.get("in_champ_select"):
+                self.status_label.configure(text="● 选人中", fg=CK["a3"])
+            elif s.get("connected"):
+                self.status_label.configure(text="● 已连接", fg=CK["green"])
+            else:
+                self.status_label.configure(text="○ 未连接", fg=CK["dim"])
+            self._rebuild_auto_tab(self._active_tab)
             ss = self.state_ref
-        self._refresh_sidebar(ss)
+
+        # 仅侧边栏数据变化时才重建
+        sh = self._sidebar_hash(ss)
+        if sh != self._last_sidebar_hash:
+            self._last_sidebar_hash = sh
+            self._refresh_sidebar(ss)
 
     def _rebuild_auto_tab(self, key: str):
         state = self.state_ref
@@ -798,6 +809,7 @@ class LoLBPUI:
             btn.configure(bg=CK["bg3"] if k == pos else CK["bg2"],
                           fg=CK["a4"] if k == pos else CK["dim"])
         self._last_state_hash = ""
+        self._last_sidebar_hash = ""
         self._smart_refresh()
 
     def _toggle_mode(self):
@@ -814,6 +826,7 @@ class LoLBPUI:
             self.manual_btn.configure(bg=CK["bg2"], fg=CK["dim"])
             self.manual_frame.pack_forget()
         self._last_state_hash = ""
+        self._last_sidebar_hash = ""
         self._smart_refresh()
 
     # ═══════════════════════════ Search / Manual ═══════════════════════════
@@ -851,14 +864,14 @@ class LoLBPUI:
         elif action == "enemy_pick":
             if key not in [p["champion_id"] for p in ms["enemy_picks"]]:
                 ms["enemy_picks"].append({"champion_id": key, "position": pos})
-        self._last_state_hash = ""; self._smart_refresh()
+        self._last_state_hash = ""; self._last_sidebar_hash = ""; self._smart_refresh()
 
     def _manual_reset(self):
         ms = self.manual_ref_cb(); ms.clear()
         ms.update({"my_bans": [], "enemy_bans": [], "my_picks": [],
                     "enemy_picks": [], "my_prepicks": [], "enemy_prepicks": [], "my_position": ""})
         self.selected_champ = None
-        self._last_state_hash = ""; self._smart_refresh()
+        self._last_state_hash = ""; self._last_sidebar_hash = ""; self._smart_refresh()
 
     # ═══════════════════════════ Sidebar ═══════════════════════════
     def _refresh_sidebar(self, state):
