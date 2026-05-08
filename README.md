@@ -1,4 +1,12 @@
-# LoL BP Assistant v1.1
+> **⚠️ 项目公告**
+> 
+> 本项目由于早期仓促创建，存在功能缺陷、Bug、使用期间卡顿等问题。目前正在全面重制中，重制版本将迁移至新仓库 **[lol-bp-rebuilt](https://github.com/alijacintleishah-spec/lol-bp-rebuilt)**。
+> 
+> 重制版当前仍在开发中，尚未发布可用版本。如需继续使用 v1.x，仍可下载下方 Release，但请留意已知问题。
+> 
+> —— 2026-05-08
+
+# LoL BP Assistant v1.1 [已停止维护]
 
 LoL 排位赛实时 BP 辅助工具 — 自动读取 LCU 数据，综合协同 + 克制给出最优英雄推荐。
 
